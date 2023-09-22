@@ -1,0 +1,44 @@
+#!/bin/python3
+
+import sys
+from pathlib import Path
+
+import requests
+import yaml
+
+if len(sys.argv) > 1:
+    path = sys.argv[1]
+else:
+    path = "./roles/requirements.yml"
+
+path = Path(path)
+
+with path.open() as f:
+    roles = yaml.safe_load(f)
+
+def get_role_latest_version(user, name):
+    url = f"https://beta-galaxy.ansible.com/api/v1/roles/?github_user={user}&name={name}"
+    response = requests.get(url)
+    response.raise_for_status()
+    data = response.json()
+    if not data["results"]:
+        print(f"Search {user} {name} yielded no results")
+        return None
+    return data["results"][0]["summary_fields"]["versions"][-1]["name"]
+
+result = ''
+result += '---\n'
+
+for role in roles:
+    result += '\n'
+    id = role.get("name") or role.get("src")
+    user, name = id.split(".")
+    current_version = role.get("version")
+    version = get_role_latest_version(user, name) or current_version
+    role["version"] = version
+    print(id, current_version, "->", version)
+    yaml_string = yaml.dump(role)
+    result += '- ' + yaml_string.replace('\n', '\n  ').strip() + '\n'
+
+with path.open("w") as f:
+    f.write(result)
