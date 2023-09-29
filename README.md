@@ -9,7 +9,7 @@ changes after updating your requirements.yml.
 ## Usage
 
 ```bash
-ansible-galayx-update [path_to_requirements.yml]
+ansible-galaxy-update [path_to_requirements.yml]
 ```
 
 Path defaults to `./roles/requirements.yml`
